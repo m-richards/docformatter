@@ -25,10 +25,9 @@ else:
 
 import docformatter
 
-
 ROOT_DIRECTORY = os.path.abspath(os.path.dirname(__file__))
 
-
+sep = os.path.sep
 if (
     'DOCFORMATTER_COVERAGE' in os.environ and
     int(os.environ['DOCFORMATTER_COVERAGE'])
@@ -1234,42 +1233,43 @@ num_iterations is the number of updates - instead of a better definition of conv
 ''', make_summary_multi_line=True))
 
     def test_exclude(self):
-        sources = {"/root"}
+
+        sources = {"{sep}root"}
         patch_data = [
-            ("/root", ['folder_one', 'folder_two'], []),
-            ("/root/folder_one", ['folder_three'], ["one.py"]),
-            ("/root/folder_one/folder_three", [], ["three.py"]),
-            ("/root/folder_two", [], ["two.py"]),
+            (f"{sep}root", ['folder_one', 'folder_two'], []),
+            (f"{sep}root{sep}folder_one", ['folder_three'], ["one.py"]),
+            (f"{sep}root{sep}folder_one{sep}folder_three", [], ["three.py"]),
+            (f"{sep}root{sep}folder_two", [], ["two.py"]),
         ]
         with patch("os.walk", return_value=patch_data), patch("os.path.isdir", return_value=True):
             test_exclude_one = list(docformatter.find_py_files(sources, True, ["folder_one"]))
-            self.assertEqual(test_exclude_one, ['/root/folder_two/two.py'])
+            self.assertEqual(test_exclude_one, [f'{sep}root{sep}folder_two{sep}two.py'])
             test_exclude_two = list(docformatter.find_py_files(sources, True, ["folder_two"]))
-            self.assertEqual(test_exclude_two, ['/root/folder_one/one.py', '/root/folder_one/folder_three/three.py'])
+            self.assertEqual(test_exclude_two, [f'{sep}root{sep}folder_one{sep}one.py', f'{sep}root{sep}folder_one{sep}folder_three{sep}three.py'])
             test_exclude_three = list(docformatter.find_py_files(sources, True, ["folder_three"]))
-            self.assertEqual(test_exclude_three, ['/root/folder_one/one.py', '/root/folder_two/two.py'])
+            self.assertEqual(test_exclude_three, [f'{sep}root{sep}folder_one{sep}one.py', f'{sep}root{sep}folder_two{sep}two.py'])
             test_exclude_py = list(docformatter.find_py_files(sources, True, ".py"))
             self.assertFalse(test_exclude_py)
             test_exclude_two_and_three = list(docformatter.find_py_files(sources, True, ["folder_two", "folder_three"]))
-            self.assertEqual(test_exclude_two_and_three, ['/root/folder_one/one.py'])
+            self.assertEqual(test_exclude_two_and_three, [f'{sep}root{sep}folder_one{sep}one.py'])
             test_exclude_files = list(docformatter.find_py_files(sources, True, ["one.py", "two.py"]))
-            self.assertEqual(test_exclude_files, ['/root/folder_one/folder_three/three.py'])
+            self.assertEqual(test_exclude_files, [f'{sep}root{sep}folder_one{sep}folder_three{sep}three.py'])
 
     def test_exclude_nothing(self):
-        sources = {"/root"}
+        sources = {f"{sep}root"}
         patch_data = [
-            ("/root", ['folder_one', 'folder_two'], []),
-            ("/root/folder_one", ['folder_three'], ["one.py"]),
-            ("/root/folder_one/folder_three", [], ["three.py"]),
-            ("/root/folder_two", [], ["two.py"]),
+            (f"{sep}root", ['folder_one', 'folder_two'], []),
+            (f"{sep}root{sep}folder_one", ['folder_three'], ["one.py"]),
+            (f"{sep}root{sep}folder_one{sep}folder_three", [], ["three.py"]),
+            (f"{sep}root{sep}folder_two", [], ["two.py"]),
         ]
         with patch("os.walk", return_value=patch_data), patch("os.path.isdir", return_value=True):
             test_exclude_nothing = list(docformatter.find_py_files(sources, True, []))
-            self.assertEqual(test_exclude_nothing, ['/root/folder_one/one.py', '/root/folder_one/folder_three/three.py',
-                                                    '/root/folder_two/two.py'])
+            self.assertEqual(test_exclude_nothing, [f'{sep}root{sep}folder_one{sep}one.py', f'{sep}root{sep}folder_one{sep}folder_three{sep}three.py',
+                                                    f'{sep}root{sep}folder_two{sep}two.py'])
             test_exclude_nothing = list(docformatter.find_py_files(sources, True))
-            self.assertEqual(test_exclude_nothing, ['/root/folder_one/one.py', '/root/folder_one/folder_three/three.py',
-                                                    '/root/folder_two/two.py'])
+            self.assertEqual(test_exclude_nothing, [f'{sep}root{sep}folder_one{sep}one.py', f'{sep}root{sep}folder_one{sep}folder_three{sep}three.py',
+                                                    f'{sep}root{sep}folder_two{sep}two.py'])
 
 class TestSystem(unittest.TestCase):
 
@@ -1358,7 +1358,7 @@ def foo():
 -    Hello world
 -    """
 +    """Hello world."""
-''', '\n'.join(process.communicate()[0].decode().split('\n')[2:]))
+''', '\n'.join(process.communicate()[0].decode().split(os.linesep)[2:]))
 
     def test_end_to_end_with_wrapping(self):
         with temporary_file('''\
@@ -1377,7 +1377,7 @@ def foo():
 -    """
 +    """Hello world this is a summary
 +    that will get wrapped."""
-''', '\n'.join(process.communicate()[0].decode().split('\n')[2:]))
+''', '\n'.join(process.communicate()[0].decode().split(os.linesep)[2:]))
 
     def test_end_to_end_with_no_wrapping(self):
         with temporary_file('''\
@@ -1392,7 +1392,7 @@ def foo():
                                         filename])
             self.assertEqual(
                 '',
-                '\n'.join(process.communicate()[0].decode().split('\n')[2:]))
+                '\n'.join(process.communicate()[0].decode().split(os.linesep)[2:]))
 
     def test_end_to_end_all_options(self):
         with temporary_file('''\
@@ -1423,7 +1423,7 @@ def foo():
  
 -
      """
-''', '\n'.join(process.communicate()[0].decode().split('\n')[2:]))
+''', '\n'.join(process.communicate()[0].decode().split(os.linesep)[2:]))
 
     def test_invalid_range(self):
         process = run_docformatter(['--range', '0', '1', os.devnull])
@@ -1450,7 +1450,7 @@ Hello world"""
         self.assertEqual(0, process.returncode)
 
         self.assertEqual(
-            '''"""Hello world."""\n''',
+            f'''"""Hello world."""{os.linesep}''',
             result)
 
     def test_standard_in_with_invalid_options(self):
